@@ -42,8 +42,7 @@ MANIFEST
 .ipynb_checkpoints/
 *.ipynb
 
-# Large model files and checkpoints
-checkpoints/
+# Large model files
 *.weights
 *.pt
 *.pth

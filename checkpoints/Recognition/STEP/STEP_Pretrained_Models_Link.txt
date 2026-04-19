@@ -1,0 +1,2 @@
+STEP pretrained models trained on both original and modified EWalk dataset in terms of 2D (HRNet), 2D+3D (MotionAGFormer), and 3D (PersPose) Human Pose Estimation:
+https://drive.google.com/drive/folders/1NdKRnEy682kDt0x8uu6Dqo_na0p_Nz7b?usp=sharing
