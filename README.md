@@ -31,8 +31,8 @@ The pipeline consists of two main components:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   cd YOUR_REPO
+   git clone https://github.com/hoangkthieu/Integrated-Skeleton-based-Gait-Emotion-Recognition-from-MotionAGFormer-and-STEP.git
+
    ```
 
 2. Install dependencies:
@@ -40,8 +40,9 @@ The pipeline consists of two main components:
    pip install -r requirements.txt
    ```
 
-3. Download pre-trained checkpoints:
+3. Download pre-trained model files:
    - See `checkpoints/` directory for model download links
+   - See `Pose_Estimation/lib/yolov3/` directory for yolov3.weights download links
 
 ## Usage
 
