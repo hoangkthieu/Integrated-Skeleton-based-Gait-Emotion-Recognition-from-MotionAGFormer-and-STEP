@@ -54,11 +54,3 @@ python integrated_pipeline.py
 ## Requirements
 
 See `requirements.txt` for all dependencies.
-
-## License
-
-[Add your license information here]
-
-## Authors
-
-[Add author information here]
