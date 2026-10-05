@@ -46,10 +46,57 @@ The pipeline consists of two main components:
 
 ## Usage
 
-Run the integrated pipeline:
+Run the gait emotion recognition pipeline by providing an input video path, a STEP model
+checkpoint path, and an output directory.
+
+### Basic Command
+
 ```bash
-python integrated_pipeline.py
+python integrated_pipeline.py \
+    --video /path/to/input_video.mp4 \
+    --checkpoint /path/to/STEP_model.pth.tar \
+    --output /path/to/output
 ```
+
+### Examples
+
+```bash
+python integrated_pipeline.py \
+    --video demo/input_video/VID_RGB_003.mp4 \
+    --checkpoint checkpoints/Recognition/STEP/original_2D+3D/epoch172_acc99.48_model.pth.tar \
+    --output demo/output
+
+```
+
+### Output Structure
+
+Results are saved under `{output}/{video_name}/`:
+
+```
+{output}/{video_name}/
+├── input_2D/
+│   └── keypoints.csv                        # 2D HRNet keypoints per frame
+├── output_3D/
+│   └── keypoints_step_order.csv             # 3D MotionAGFormer keypoints (world-space)
+├── keypoint_features/
+│   ├── keypointFeatures.csv                 # Root-centered keypoints (for ST-GCN)
+│   └── keypointFeatures_worldspace.csv      # World-space keypoints
+└── affective_features/
+    ├── affectiveFeatures.h5                 # Computed affective features
+    └── affectiveFeatures.csv                # Human-readable affective features
+```
+
+### Emotion Classes
+
+The model predicts one of four emotions:
+
+| Class ID | Emotion |
+|---|---|
+| 0 | Angry |
+| 1 | Neutral |
+| 2 | Happy |
+| 3 | Sad |
+
 
 ## Requirements
 
