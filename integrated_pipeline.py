@@ -12,53 +12,6 @@ Usage:
         --checkpoint path/to/STEP_model.pth.tar \
         --output path/to/output
 
-FIXES APPLIED:
-  [FIX 1] reshape_keypoint_features: coords were scrambled.
-           reshape(T, C, V, M) was wrong — data layout is interleaved (V,C).
-           Now correctly reshapes as (T,V,C) -> transpose -> (1,C,T,V,1).
-  [FIX 2] Root-centering split: world-space keypoints kept for affective features
-           (Speed/Stride/Accel were all ~0 after root subtraction).
-           Root-centered keypoints used only for the ST-GCN skeleton branch.
-  [FIX 3] Affective features loaded from pre-computed H5 file instead of
-           being recomputed from MotionAGFormer output. compute_features.py
-           was written for a different coordinate system and cannot be used
-           on MotionAGFormer output directly. Pass --aff_features_h5 pointing
-           to affectiveFeatures_3D_train.h5 or affectiveFeatures_3D_test.h5.
-  [FIX 4] FPS read from actual video instead of hardcoded 30fps.
-  [FIX 5] Scale conversion: MotionAGFormer outputs in normalized coordinates [-1, 1],
-           which matches the training data coordinate system. No scaling needed.
-           Affective features are computed directly and normalized to match the
-           training distribution for correct inference on unseen videos.
-  [FIX 6] Skeleton branch scaling: ST-GCN outputs [0, 490] are scaled by
-           dividing by scale_factor before concatenating with affective features [-1, 1].
-           This prevents BatchNorm amplification (3x -> extreme logits).
-           
-           Tuning guide: Default scale_factor=50 gives [0, 10] range.
-           If predictions still biased to one class, try:
-           - Increase scale_factor to 100 (→ [0, 5]) or 200 (→ [0, 2.5])
-           - Decrease scale_factor to 25 (→ [0, 20]) to preserve more skeleton signal
-           Can be adjusted by modifying line in predict(): 
-           output = self._forward_with_scaling(x_aff, x_gait, scale_factor=50)
-  [FIX 10] Affective feature computation limitation.
-           MotionAGFormer outputs normalized [-1, 1] keypoints.
-           compute_features.py was designed for world-space coordinates.
-           Scaling input doesn't work (features scale differently):
-           - Volume scales as scale³ (problematic)
-           - Distances scale as scale¹ (problematic)
-           - Angles don't scale (dimensionless ratios, always too large)
-           RECOMMENDATION: Use pre-computed H5 features (pass --aff_features_h5)
-           with --aff_features_h5 pointing to training/test affective feature file.
-           Alternatively, implement custom feature computation for normalized space.
-  [FIX 11] CRITICAL: Training used RAW unnormalized affective features from H5 files.
-           NO normalization (_NORM_A/_NORM_B) was applied during training.
-           Inference must match training conditions exactly.
-           Solution: Pass raw affective features directly to model.
-           Do NOT call _normalize_affective_features() - this breaks train/test mismatch.
-  [FIX 12] ROBUST FILE DISCOVERY & FALLBACK for affective features.
-           - Searches multiple locations for pre-computed affective features H5 files
-           - Provides clear guidance if files not found
-           - Falls back to computing features with explicit warnings
-           - Includes diagnostic messages for troubleshooting
 """
 
 import sys
@@ -1056,3 +1009,54 @@ Note: Output structure will be: {output_dir}/{video_name}/
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+"""
+FIXES APPLIED:
+  [FIX 1] reshape_keypoint_features: coords were scrambled.
+           reshape(T, C, V, M) was wrong — data layout is interleaved (V,C).
+           Now correctly reshapes as (T,V,C) -> transpose -> (1,C,T,V,1).
+  [FIX 2] Root-centering split: world-space keypoints kept for affective features
+           (Speed/Stride/Accel were all ~0 after root subtraction).
+           Root-centered keypoints used only for the ST-GCN skeleton branch.
+  [FIX 3] Affective features loaded from pre-computed H5 file instead of
+           being recomputed from MotionAGFormer output. compute_features.py
+           was written for a different coordinate system and cannot be used
+           on MotionAGFormer output directly. Pass --aff_features_h5 pointing
+           to affectiveFeatures_3D_train.h5 or affectiveFeatures_3D_test.h5.
+  [FIX 4] FPS read from actual video instead of hardcoded 30fps.
+  [FIX 5] Scale conversion: MotionAGFormer outputs in normalized coordinates [-1, 1],
+           which matches the training data coordinate system. No scaling needed.
+           Affective features are computed directly and normalized to match the
+           training distribution for correct inference on unseen videos.
+  [FIX 6] Skeleton branch scaling: ST-GCN outputs [0, 490] are scaled by
+           dividing by scale_factor before concatenating with affective features [-1, 1].
+           This prevents BatchNorm amplification (3x -> extreme logits).
+           
+           Tuning guide: Default scale_factor=50 gives [0, 10] range.
+           If predictions still biased to one class, try:
+           - Increase scale_factor to 100 (→ [0, 5]) or 200 (→ [0, 2.5])
+           - Decrease scale_factor to 25 (→ [0, 20]) to preserve more skeleton signal
+           Can be adjusted by modifying line in predict(): 
+           output = self._forward_with_scaling(x_aff, x_gait, scale_factor=50)
+  [FIX 10] Affective feature computation limitation.
+           MotionAGFormer outputs normalized [-1, 1] keypoints.
+           compute_features.py was designed for world-space coordinates.
+           Scaling input doesn't work (features scale differently):
+           - Volume scales as scale³ (problematic)
+           - Distances scale as scale¹ (problematic)
+           - Angles don't scale (dimensionless ratios, always too large)
+           RECOMMENDATION: Use pre-computed H5 features (pass --aff_features_h5)
+           with --aff_features_h5 pointing to training/test affective feature file.
+           Alternatively, implement custom feature computation for normalized space.
+  [FIX 11] CRITICAL: Training used RAW unnormalized affective features from H5 files.
+           NO normalization (_NORM_A/_NORM_B) was applied during training.
+           Inference must match training conditions exactly.
+           Solution: Pass raw affective features directly to model.
+           Do NOT call _normalize_affective_features() - this breaks train/test mismatch.
+  [FIX 12] ROBUST FILE DISCOVERY & FALLBACK for affective features.
+           - Searches multiple locations for pre-computed affective features H5 files
+           - Provides clear guidance if files not found
+           - Falls back to computing features with explicit warnings
+           - Includes diagnostic messages for troubleshooting
+"""
